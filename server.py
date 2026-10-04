@@ -1,26 +1,34 @@
 import os
 import requests
-from fastapi import FastAPI, Request
-
-app = FastAPI()
+from mcp.server.fastmcp import FastMCP
 
 CHITRIO_API_KEY = os.getenv("CHITRIO_API_KEY")
 CHITRIO_URL = "https://chitrio.com/api/v1/videos"
 
+mcp = FastMCP(
+    "Chitrio YouTube",
+    stateless_http=True,
+    json_response=True,
+    streamable_http_path="/mcp"
+)
 
-@app.get("/")
-def home():
-    return {"status": "Chitrio YouTube MCP server is running"}
 
-
-@app.post("/create-video")
-async def create_video(request: Request):
-    data = await request.json()
+@mcp.tool()
+def create_video(
+    topic: str,
+    duration_in_minutes: int = 3,
+    language: str = "en"
+) -> str:
+    """Create an AI video using Chitrio."""
 
     if not CHITRIO_API_KEY:
-        return {
-            "error": "CHITRIO_API_KEY is not configured"
-        }
+        return "Error: CHITRIO_API_KEY is not configured."
+
+    payload = {
+        "topic": topic,
+        "durationInMinutes": duration_in_minutes,
+        "language": language
+    }
 
     response = requests.post(
         CHITRIO_URL,
@@ -28,27 +36,17 @@ async def create_video(request: Request):
             "X-Api-Key": CHITRIO_API_KEY,
             "Content-Type": "application/json"
         },
-        json=data,
+        json=payload,
         timeout=60
     )
 
-    return {
-        "status_code": response.status_code,
-        "result": response.json()
+    return response.text
+
+
+app = mcp.streamable_http_app(
+    transport_security={
+        "allowed_hosts": [
+            "chitrio-youtube-mcp.onrender.com"
+        ]
     }
-
-
-@app.get("/video-status/{job_id}")
-def video_status(job_id: str):
-    response = requests.get(
-        f"{CHITRIO_URL}/{job_id}",
-        headers={
-            "X-Api-Key": CHITRIO_API_KEY
-        },
-        timeout=30
-    )
-
-    return {
-        "status_code": response.status_code,
-        "result": response.json()
-    }
+)
