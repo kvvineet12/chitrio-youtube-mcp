@@ -1,3 +1,4 @@
+
 import os
 import requests
 from mcp.server.fastmcp import FastMCP
@@ -8,7 +9,9 @@ CHITRIO_URL = "https://chitrio.com/api/v1/videos"
 mcp = FastMCP(
     "Chitrio YouTube",
     stateless_http=True,
-    json_response=True
+    json_response=True,
+    host="0.0.0.0",
+    port=int(os.getenv("PORT", "10000"))
 )
 
 
