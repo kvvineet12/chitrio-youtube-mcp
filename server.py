@@ -8,8 +8,7 @@ CHITRIO_URL = "https://chitrio.com/api/v1/videos"
 mcp = FastMCP(
     "Chitrio YouTube",
     stateless_http=True,
-    json_response=True,
-    streamable_http_path="/mcp"
+    json_response=True
 )
 
 
@@ -43,10 +42,4 @@ def create_video(
     return response.text
 
 
-app = mcp.streamable_http_app(
-    transport_security={
-        "allowed_hosts": [
-            "chitrio-youtube-mcp.onrender.com"
-        ]
-    }
-)
+app = mcp.streamable_http_app()
